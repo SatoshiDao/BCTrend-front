@@ -2,8 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 @import '~antd/dist/antd.css';
-.isSelect{
+
+.ant-menu{
+    font-size: 1.2rem !important;
+    text-align: center;
+}
+
+.isSelect {
     border-radius: 1.5rem;
-    background-color:#02a7f0 ;
+    background-color: #02a7f0;
     color: #fff;
 }
