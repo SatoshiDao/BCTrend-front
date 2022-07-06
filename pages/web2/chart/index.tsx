@@ -225,6 +225,7 @@ const Home: NextPage = () => {
       //数据维度分类
       const title1 = chartOptions[Number(chartColum) - 1]?.title||'';
       const title2 = chartOptions[Number(compareColum) - 1]?.title||'';
+      setTitle(`${types.length===2?'Bitcoin, Ethereum':types.includes('BTC')?'Bitcoin':'Ethereum'} ${title1} ${title1&& title2 &&'vs.'} ${title2}  historical char`)
       queue=queue.map((item)=>({...item,data:item.data.map(([date,value]:[string,string])=>({date,value:Number(value) || 0,type:`${item.type===1||item.type==3?'BTC':'ETH'} ${item.type===1||item.type==2?title1:title2} : ${item.total}k`}))}))
       setData(queue.map((item)=>item.data).flat())
       setLoading(false);

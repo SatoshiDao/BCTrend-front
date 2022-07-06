@@ -45,6 +45,7 @@ const Layout = ({ children }: { children: any }) => {
           width: "100vw",
           paddingLeft: "80px",
           fontWeight: "bold",
+          fontSize: "36px",
         }}
       >
         BCTrade
@@ -55,7 +56,7 @@ const Layout = ({ children }: { children: any }) => {
       >
         <div
           className=" w-72 text-xl mt-10 h-full"
-          style={{ width: "280px", fontSize: "24px!important" }}
+          style={{ width: "280px", fontSize: "16px!important" }}
         >
           <Menu items={items} mode="inline" onSelect={jumpURL} />
         </div>
