@@ -12,15 +12,15 @@ const Layout = ({ children }: { children: any }) => {
       label: "Web2.0",
       key: "web2",
       children: [
-        { label: "Chart", key: "chart2",url: "/web2/chart" },
-        { label: "Project", key: "project2",url: "/web2/project" },
+        { label: "Chart", key: "chart2", url: "/web2/chart" },
+        { label: "Project", key: "project2", url: "/web2/project" },
       ],
     },
     {
       label: "Web3.0",
       key: "web3",
       children: [
-        { label: "Chart", key: "chart3",url: "/web3/chart" },
+        { label: "Chart", key: "chart3", url: "/web3/chart" },
         { label: "Project", key: "project3", url: "/web3/project" },
       ],
     },
@@ -28,7 +28,7 @@ const Layout = ({ children }: { children: any }) => {
   const router = useRouter();
   const jumpURL = ({ item }: { item: any }) => {
     const { props } = item;
-    if(props.url){
+    if (props.url) {
       router.push(props.url);
     }
   };
@@ -40,7 +40,12 @@ const Layout = ({ children }: { children: any }) => {
       </Head>
       <div
         className="flex items-center text-2xl"
-        style={{ height: "80px", width: "100vw", paddingLeft: "80px",fontSize:'24px',fontWeight:"bold" }}
+        style={{
+          height: "80px",
+          width: "100vw",
+          paddingLeft: "80px",
+          fontWeight: "bold",
+        }}
       >
         BCTrade
       </div>
@@ -48,7 +53,10 @@ const Layout = ({ children }: { children: any }) => {
         className="flex w-full  h-full pt-4"
         style={{ paddingTop: "20px", paddingRight: "16px" }}
       >
-        <div className=" w-72 text-xl mt-10 h-full" style={{ width: "280px",fontSize:'24px!important' }}>
+        <div
+          className=" w-72 text-xl mt-10 h-full"
+          style={{ width: "280px", fontSize: "24px!important" }}
+        >
           <Menu items={items} mode="inline" onSelect={jumpURL} />
         </div>
         <div className="w-full flex-1 h-full ">{children}</div>
