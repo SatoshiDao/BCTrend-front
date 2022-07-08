@@ -1,83 +1,147 @@
-import type { NextPage } from "next";
-import { Button, Input, Table, Divider } from "antd";
+import { Button, Input, Table, Divider,Spin } from "antd";
 import { PlusCircleOutlined } from "@ant-design/icons";
-import { useState } from "react";
-const Home: NextPage = () => {
-  const [counts, setCounts] = useState<string[]>(["11111", "2222222"]);
-  const dataSource = [
+import { useState, useEffect, useMemo } from "react";
+import request from "../../../utils/request";
+import { formatCount } from "../../../utils";
+interface Count {
+  count: string;
+  isInput: boolean;
+}
+const Home = ({ data }: { data: any[] }) => {
+  //初始化counts
+  const [counts, setCounts] = useState<Count[]>(
+    data.map((item) => ({ count: item.address, isInput: false }))
+  );
+  const [loading,setLoading]=useState(false)
+  const [dataSource, setDataSource] = useState<any[]>([
     {
-      key: "1",
+      id: "total_asset",
       title: "Total assets",
-      count1: "100",
-      count2: "100",
     },
     {
-      key: "2",
+      id: "daily_pnl",
       title: "Daily PnL",
-      count1: "200",
-      count2: "100",
     },
     {
-      key: "3",
+      id: "pnl_ratio",
       title: "Daily PnL Ratio",
-      count1: "300",
-      count2: "100",
     },
     {
-      key: "4",
+      id: "daily_tnx",
       title: "Daily Txns",
-      count1: "400",
-      count2: "100",
     },
     {
-      key: "5",
+      id: "stable_coin",
       title: "Stable Coin%",
-      count1: "500",
-      count2: "100",
     },
     {
-      key: "6",
+      id: "days_activity",
       title: "7/30/90 Days Activity",
-      count1: "600",
-      count2: "100",
     },
-  ];
+  ]);
+  const [concatData, setConcatData] = useState(data);
 
-  const columns = [
-    {
-      title: "Adress",
-      key: "title",
-      render: (item: any) => (
-        <span className=" text-black font-semibold">{item.title}</span>
+  const columns = useMemo(() => {
+    const extendCo = counts.map((item: Count) => ({
+      title:<a href={`./chart?address=${item.count}`}>{formatCount(item.count)}</a>,
+      key: item.count,
+      render: (Item: any) => (
+        <span className=" text-black font-semibold">
+          {Item[item.count] || "0"}
+        </span>
       ),
-    },
-    {
-      title:<div className=" text-gray-600  font-normal">11111111</div>,
-      dataIndex: "count1",
-      key: "count1",
-    },
-    {
-      title:<div className=" text-gray-600  font-normal">2222222</div>,
-      dataIndex: "count2",
-      key: "count2",
-    },
-  ];
+    }));
+    return [
+      {
+        title: "Address",
+        key: "title",
+        render: (item: any) => (
+          <span className=" text-black font-semibold">{item.title}</span>
+        ),
+      },
+      ...extendCo,
+    ];
+  }, [counts]);
   const addCount = () => {
     if (counts.length < 5) {
-      setCounts([...counts, ""]);
+      setCounts([...counts, { count: "", isInput: false }]);
     }
   };
+
+  useEffect(() => {
+    (() => {
+      setDataSource(
+        dataSource?.map((Item) => {
+          let keys: { [key: string]: any } = {};
+          concatData.map((item) => {
+            if (!keys[item.address]) {
+              keys[item.address] = item[Item.id]||0;
+            }
+          });
+          return { ...Item, ...keys };
+        })
+      );
+    })();
+  }, [concatData]);
+  const getInfoByAddress = async ({ target }: { target: any }) => {
+    if(target.value){
+      setLoading(true)
+      //@ts-ignore
+      const { result } = await request({
+        url: `/`,
+        method: "GET",
+        params: {
+          address: target.value,
+        },
+      });
+      setLoading(false)
+      setConcatData([...concatData, { ...result, address: target.value }]);
+    }
+    
+  };
   return (
-    <div className=" w-full h-full p-4">
+    <div
+      className=" w-full h-full py-8 px-4 rounded-sm"
+      style={{ border: "1px solid #333" }}
+    >
       <div className=" w-full flex items-center">
-        {counts.map((count: string, index: number) => (
-          <div className=" mr-2" key={count}>
-            <Input
-              allowClear
-              className=" w-36 mr-1"
-              defaultValue={count}
-            ></Input>
-            {index !== counts.length - 1 ? "vs." : ""}
+        {counts.map((count: Count, index: number) => (
+          <div className=" mr-2  w-36 h-8 flex items-center" key={index}>
+            {count.isInput ? (
+              <Input
+                allowClear
+                className=" w-36 mr-1"
+                defaultValue={count.count}
+                onBlur={(e) => {
+                  setCounts(
+                    counts.map((item: Count, Index: number) => ({
+                      ...item,
+                      isInput: Index === index ? false : item.isInput,
+                      count: Index === index ? e.target.value : item.count,
+                    }))
+                  );
+                  getInfoByAddress(e);
+                }}
+              ></Input>
+            ) : (
+              <div
+                className="h-8 w-36  flex items-center rounded-sm pl-2"
+                style={{ border: "1px solid #ccc" }}
+                onClick={() =>
+                  setCounts(
+                    counts.map((item: Count, Index: number) => ({
+                      ...item,
+                      isInput: Index === index ? true : item.isInput,
+                    }))
+                  )
+                }
+              >
+                {formatCount(count.count)}
+              </div>
+            )}
+            <div className=" ml-1">
+              {index !== counts.length - 1 ? "vs." : ""}
+            </div>
           </div>
         ))}
         <Button
@@ -96,10 +160,39 @@ const Home: NextPage = () => {
           columns={columns}
           pagination={false}
           tableLayout="fixed"
+          rowKey="id"
+          loading={loading}
         />
       </div>
     </div>
   );
 };
-
+export async function getStaticProps(context: any) {
+  try {
+    //@ts-ignore
+    const { result } = await request({
+      url: `/`,
+      params: {
+        address: "0xceb69f6342ece283b2f5c9088ff249b5d0ae66ea",
+      },
+      method: "GET",
+    });
+    return {
+      props: {
+        data: result
+          ? [
+              {
+                ...result,
+                address: "0xceb69f6342ece283b2f5c9088ff249b5d0ae66ea",
+              },
+            ]
+          : [],
+      },
+    };
+  } catch (error) {
+    return {
+      props: { data: [] },
+    };
+  }
+}
 export default Home;

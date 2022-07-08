@@ -3,6 +3,7 @@ import { Button, DatePicker, Select, Spin } from "antd";
 import { useState, useEffect } from "react";
 import { Line } from "@ant-design/plots";
 import dayjs from "dayjs";
+import moment from "moment";
 const BaseURL = "http://43.129.181.196";
 const Home: NextPage = () => {
   const tags = ["7D", "1M", "3M", "6M", "1Y", "ALL"];
@@ -182,53 +183,89 @@ const Home: NextPage = () => {
   const [types, setTypes] = useState(["BTC"]);
   useEffect(() => {
     (async () => {
-      setLoading(true);
-      let queue = [];
-      if (types.includes("BTC")) {
-        if (chartColum) {
-          queue.push({
-            type: 1,
-            url: urls[chartColum].btc,
-          });
+      try {
+        setLoading(true);
+        let queue = [];
+        if (types.includes("BTC")) {
+          if (chartColum) {
+            queue.push({
+              type: 1,
+              url: urls[chartColum].btc,
+            });
+          }
+          if (compareColum) {
+            queue.push({
+              type: 3,
+              url: urls[compareColum].btc,
+            });
+          }
         }
-        if (compareColum) {
-          queue.push({
-            type: 3,
-            url: urls[compareColum].btc,
-          });
+        if (types.includes("ETH")) {
+          if (chartColum) {
+            queue.push({
+              type: 2,
+              url: urls[chartColum].etc,
+            });
+          }
+          if (compareColum) {
+            queue.push({
+              type: 4,
+              url: urls[compareColum].etc,
+            });
+          }
         }
+        console.log(queue);
+        let allData = await Promise.all(
+          queue.map((item) =>
+            fetch(`${BaseURL}/${item.url}`).then((res) => res.json())
+          )
+        );
+        const [startTime, endTime] = date;
+        queue = queue.map((item, index) => ({
+          ...item,
+          data: allData[index].filter(
+            ([date]: [date: string]) =>
+              date >= (startTime || "1900/01/01") &&
+              date <= (endTime || dayjs().format("YYYY/MM/DD"))
+          ),
+        }));
+        //统计过滤后的总数
+        queue = queue.map((item) => ({
+          ...item,
+          total: (
+            item.data.reduce(
+              (pre: any, next: any) => pre + (Number(next[1]) || 0),
+              0
+            ) / 1000
+          ).toFixed(1),
+        }));
+        //数据维度分类
+        const title1 = chartOptions[Number(chartColum) - 1]?.title || "";
+        const title2 = chartOptions[Number(compareColum) - 1]?.title || "";
+        setTitle(
+          `${
+            types.length === 2
+              ? "Bitcoin, Ethereum"
+              : types.includes("BTC")
+              ? "Bitcoin"
+              : "Ethereum"
+          } ${title1} ${title1 && title2 && "vs."} ${title2}  historical char`
+        );
+        queue = queue.map((item) => ({
+          ...item,
+          data: item.data.map(([date, value]: [string, string]) => ({
+            date,
+            value: Number(value) || 0,
+            type: `${item.type === 1 || item.type == 3 ? "BTC" : "ETH"} ${
+              item.type === 1 || item.type == 2 ? title1 : title2
+            } : ${item.total}k`,
+          })),
+        }));
+        setData(queue.map((item) => item.data).flat());
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
       }
-      if (types.includes("ETH")) {
-        if (chartColum) {
-          queue.push({
-            type: 2,
-            url: urls[chartColum].etc,
-          });
-        }
-        if (compareColum) {
-          queue.push({
-            type: 4,
-            url: urls[compareColum].etc,
-          });
-        }
-      }
-      console.log(queue);
-      let allData = await Promise.all(
-        queue.map((item) =>
-          fetch(`${BaseURL}/${item.url}`).then((res) => res.json())
-        )
-      );
-      const [startTime, endTime] = date;
-      queue = queue.map((item, index) => ({ ...item, data: allData[index].filter(([date]: [date: string]) => date >= (startTime||'1900/01/01') && date <= (endTime||dayjs().format('YYYY/MM/DD'))) }));
-      //统计过滤后的总数
-      queue=queue.map((item)=>({...item,total:(item.data.reduce((pre: any, next: any) => pre + (Number(next[1]) || 0), 0) /1000).toFixed(1)}));
-      //数据维度分类
-      const title1 = chartOptions[Number(chartColum) - 1]?.title||'';
-      const title2 = chartOptions[Number(compareColum) - 1]?.title||'';
-      setTitle(`${types.length===2?'Bitcoin, Ethereum':types.includes('BTC')?'Bitcoin':'Ethereum'} ${title1} ${title1&& title2 &&'vs.'} ${title2}  historical char`)
-      queue=queue.map((item)=>({...item,data:item.data.map(([date,value]:[string,string])=>({date,value:Number(value) || 0,type:`${item.type===1||item.type==3?'BTC':'ETH'} ${item.type===1||item.type==2?title1:title2} : ${item.total}k`}))}))
-      setData(queue.map((item)=>item.data).flat())
-      setLoading(false);
     })();
   }, [date, chartColum, types, compareColum]);
 
@@ -242,7 +279,7 @@ const Home: NextPage = () => {
       nice: true,
       tickCount: 20,
     },
-    smooth:true,
+    smooth: true,
     // label:{
     //   autoHide:true
     // }
@@ -293,8 +330,8 @@ const Home: NextPage = () => {
           </div>
           <div>
             <DatePicker.RangePicker
-            //@ts-ignore
-              value={date.map((item) => dayjs(item))}
+              //@ts-ignore
+              value={date.map((item) => moment(item))}
               onChange={(e: any) =>
                 setDate([
                   dayjs(e[0] as unknown as string).format("YYYY/MM/DD"),
@@ -349,7 +386,7 @@ const Home: NextPage = () => {
               defaultValue={chartColum}
               placeholder="Avg. Transaction Value"
               onChange={(value) => setChartColum(value)}
-              style={{width:"330px"}}
+              style={{ width: "330px" }}
             />
           </div>
           <div className=" flex  items-center">
@@ -359,7 +396,7 @@ const Home: NextPage = () => {
               defaultValue={compareColum}
               className=" w-80 ml-2"
               placeholder="Sent in USD"
-              style={{width:"330px"}}
+              style={{ width: "330px" }}
               onChange={(value) => setCompareColum(value)}
             />
           </div>
