@@ -48,7 +48,7 @@ const Home: NextPage = () => {
   const [chartColum, setChartColum] = useState("total_asset");
   const [compareColum, setCompareColum] = useState("");
   const { query } = useRouter();
-  const [counts, setCounts] = useState([]);
+  const [counts, setCounts] = useState<any[]>([]);
   // useEffect(() => {
   //   (() => {
   //     axios({
