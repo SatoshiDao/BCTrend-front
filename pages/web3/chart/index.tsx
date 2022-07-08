@@ -134,7 +134,7 @@ const Home: NextPage = () => {
           </div>
         </div>
         <Line {...config}></Line>
-        <div className=" mt-8 ml-8 flex">
+        {/* <div className=" mt-8 ml-8 flex">
           {counts.map((count) => (
             <Button
               key={count.id}
@@ -161,7 +161,7 @@ const Home: NextPage = () => {
               }
             ></Button>
           ))}
-        </div>
+        </div> */}
         <div className=" flex justify-between mt-10 px-8">
           <div className=" flex items-center">
             <div>Chart:</div>
