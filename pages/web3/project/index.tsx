@@ -42,7 +42,7 @@ const Home = ({ data }: { data: any[] }) => {
   const [concatData, setConcatData] = useState(data);
 
   const columns = useMemo(() => {
-    const extendCo = counts.map((item: Count) => ({
+    const extendCo = counts.filter((item:Count)=>item.count!=='').map((item: Count) => ({
       title:<a href={`./chart?address=${item.count}`}>{formatCount(item.count)}</a>,
       key: item.count,
       render: (Item: any) => (
