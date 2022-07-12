@@ -1,4 +1,4 @@
-import { Button, DatePicker, Select, Spin, AutoComplete } from "antd";
+import { Button, DatePicker, Select, Spin, AutoComplete,Tooltip} from "antd";
 import { useState, useEffect } from "react";
 import { Line } from "@ant-design/plots";
 import dayjs from "dayjs";
@@ -27,7 +27,7 @@ const Home = () => {
     },
     {
       label: "Daily Txns",
-      value: "daily_tnx",
+      value: "daily_txn",
       title: "Daily Txns",
     },
     {
@@ -54,28 +54,29 @@ const Home = () => {
   const [chartColum, setChartColum] = useState("total_asset");
   const [compareColum, setCompareColum] = useState("");
   const { query } = useRouter();
-  // console.log(query,'8888')
   const [counts, setCounts] = useState<any[]>([]);
+  const [range, setRange] = useState({ min: 0, max: 100 });
   useEffect(() => {
     if (query.address) {
       setCounts([{ address: query.address, id: 1, active: true }]);
-    }else{
-      setCounts([  {
-        address: "0x781229c7a798c33ec788520a6bbe12a79ed657fc",
-        id: 1,
-        active: true,
-      },
-      // {
-      //   address: "0x260ee8f2b0c167e0cd6119b2df923fd061dc1093",
-      //   id: 2,
-      //   active: true,
-      // },
-      // {
-      //   address: "0xceb69f6342ece283b2f5c9088ff249b5d0ae66ea",
-      //   id: 3,
-      //   active: true,
-      // }
-    ])
+    } else {
+      setCounts([
+        {
+          address: "0x781229c7a798c33ec788520a6bbe12a79ed657fc",
+          id: 1,
+          active: true,
+        },
+        // {
+        //   address: "0x260ee8f2b0c167e0cd6119b2df923fd061dc1093",
+        //   id: 2,
+        //   active: true,
+        // },
+        // {
+        //   address: "0xceb69f6342ece283b2f5c9088ff249b5d0ae66ea",
+        //   id: 3,
+        //   active: true,
+        // }
+      ]);
     }
   }, [query.address]);
   useEffect(() => {
@@ -118,38 +119,48 @@ const Home = () => {
         data.push(
           DATA.map((item: any) => ({
             date: item.date,
-            value: Number(item[chartColum as string]),
+            value: parseFloat(item[chartColum as string])||0,
             type: `${formatCount(item.address)} ${titles[chartColum]}`,
           }))
         );
         data.push(
           DATA.map((item: any) => ({
             date: item.date,
-            value: Number(item[compareColum as string]),
+            value: parseFloat(item[compareColum as string])||0,
             type: `${formatCount(item.address)} ${titles[compareColum]}`,
           }))
         );
+        const values = data.flat().map(({ value }) => value);
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        setRange({ min, max });
         return setData(data.flat());
       }
       if (chartColum) {
         setTitle(`${titleAccount} ${titles[chartColum]} historical chart`);
-        return setData(
-          DATA.map((item: any) => ({
-            date: item.date,
-            value: Number(item[chartColum as string]),
-            type: `${formatCount(item.address)} ${titles[chartColum]}`,
-          }))
-        );
+        let resultData = DATA.map((item: any) => ({
+          date: item.date,
+          value: parseFloat(item[chartColum as string])||0,
+          type: `${formatCount(item.address)} ${titles[chartColum]}`,
+        }));
+        const values = resultData.map(({ value }) => value);
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        setRange({ min, max });
+        return setData(resultData);
       }
       if (compareColum) {
         setTitle(`${titleAccount} ${titles[compareColum]} historical chart`);
-        return setData(
-          DATA.map((item: any) => ({
-            date: item.date,
-            value: Number(item[compareColum as string]),
-            type: `${formatCount(item.address)} ${titles[compareColum]}`,
-          }))
-        );
+        let resultData = DATA.map((item: any) => ({
+          date: item.date,
+          value: parseFloat(item[compareColum as string])||0,
+          type: `${formatCount(item.address)} ${titles[compareColum]}`,
+        }));
+        const values = resultData.map(({ value }) => value);
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        setRange({ min, max });
+        return setData(resultData);
       }
     })();
   }, [chartColum, compareColum, counts]);
@@ -163,7 +174,11 @@ const Home = () => {
       nice: true,
       tickCount: 20,
     },
-    // smooth: true,
+    yAxis: {
+      min: range.min,
+      max: range.max,
+    },
+    smooth: true,
   };
   const changeDate = (tag: string) => {
     setTag(tag);
@@ -188,7 +203,7 @@ const Home = () => {
   };
   return (
     <div
-      className=" w-full h-full p-4 px-9 pb-44"
+      className=" h-full p-4 px-9 pb-44 m-8"
       style={{ border: "1px solid #333" }}
     >
       <Spin spinning={loading}>
@@ -261,7 +276,7 @@ const Home = () => {
               icon={
                 <div className=" flex items-center h-8 p-2 pb-4">
                   <div className=" mr-1">
-                    {formatCount(count.address as string)}
+                   <Tooltip title={count.address}> {formatCount(count.address as string)}</Tooltip>
                   </div>
                   <CloseOutlined
                     className=" ml-1"

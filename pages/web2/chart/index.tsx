@@ -307,7 +307,7 @@ const Home: NextPage = () => {
   };
   return (
     <div
-      className=" w-full h-full p-4 px-9 pb-44"
+      className="h-full p-4 px-9 pb-44 m-8"
       style={{ border: "1px solid #333" }}
     >
       <Spin spinning={loading}>
@@ -382,7 +382,7 @@ const Home: NextPage = () => {
             <div>Chart:</div>
             <Select
               options={chartOptions}
-              className=" w-80 ml-2"
+              className=" w-96 ml-2"
               defaultValue={chartColum}
               placeholder="Avg. Transaction Value"
               onChange={(value) => setChartColum(value)}
@@ -394,7 +394,7 @@ const Home: NextPage = () => {
             <Select
               options={chartOptions}
               defaultValue={compareColum}
-              className=" w-80 ml-2"
+              className=" w-96 ml-2"
               placeholder="Sent in USD"
               style={{ width: "330px" }}
               onChange={(value) => setCompareColum(value)}

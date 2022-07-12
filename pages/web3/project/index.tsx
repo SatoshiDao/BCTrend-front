@@ -1,6 +1,6 @@
-import { Button, Input, Table, Divider,Spin } from "antd";
-import { PlusCircleOutlined } from "@ant-design/icons";
-import { useState, useEffect, useMemo } from "react";
+import { Button, Input, Table, Divider,Tooltip} from "antd";
+import { PlusCircleOutlined,CloseOutlined} from "@ant-design/icons";
+import { useState, useEffect, useMemo,useCallback} from "react";
 import request from "../../../utils/request";
 import { formatCount } from "../../../utils";
 interface Count {
@@ -27,7 +27,7 @@ const Home = ({ data }: { data: any[] }) => {
       title: "Daily PnL Ratio",
     },
     {
-      id: "daily_tnx",
+      id: "daily_txn",
       title: "Daily Txns",
     },
     {
@@ -43,10 +43,11 @@ const Home = ({ data }: { data: any[] }) => {
 
   const columns = useMemo(() => {
     const extendCo = counts.filter((item:Count)=>item.count!=='').map((item: Count) => ({
-      title:<a href={`./chart?address=${item.count}`}>{formatCount(item.count)}</a>,
+      title:<Tooltip title={item.count}><a  className=" text-blue-400" href={`./chart?address=${item.count}`}>{formatCount(item.count)}</a></Tooltip>,
       key: item.count,
+      align:'center',
       render: (Item: any) => (
-        <span className=" text-black font-semibold">
+        <span className=" text-black font-semibold ">
           {Item[item.count] || "0"}
         </span>
       ),
@@ -55,6 +56,7 @@ const Home = ({ data }: { data: any[] }) => {
       {
         title: "Address",
         key: "title",
+        align:'center',
         render: (item: any) => (
           <span className=" text-black font-semibold">{item.title}</span>
         ),
@@ -62,11 +64,11 @@ const Home = ({ data }: { data: any[] }) => {
       ...extendCo,
     ];
   }, [counts]);
-  const addCount = () => {
+  const addCount =useCallback(() => {
     if (counts.length < 5) {
       setCounts([...counts, { count: "", isInput: false }]);
     }
-  };
+  },[counts]);
 
   useEffect(() => {
     (() => {
@@ -99,33 +101,41 @@ const Home = ({ data }: { data: any[] }) => {
     }
     
   };
+  const addCountByBlurOrEnter=useCallback((e:any,index:number)=>{
+    setCounts(
+      counts.map((item: Count, Index: number) => ({
+        ...item,
+        isInput: Index === index ? false : item.isInput,
+        count: Index === index ? e.target.value : item.count,
+      }))
+    );
+    getInfoByAddress(e);
+  },[counts])
+  const deleteCount=useCallback((e:any,index:number)=>{
+        e.stopPropagation();
+        setCounts(
+          counts.filter((item: Count, Index: number) => Index!==index)
+        )
+  },[counts])
   return (
     <div
-      className=" w-full h-full py-8 px-4 rounded-sm"
+      className=" h-full py-8 px-8 mx-6 my-10 rounded-sm"
       style={{ border: "1px solid #333" }}
     >
       <div className=" w-full flex items-center">
         {counts.map((count: Count, index: number) => (
-          <div className=" mr-2  w-36 h-8 flex items-center" key={index}>
+          <div className=" mr-2  w-40 h-8 flex items-center" key={index}>
             {count.isInput ? (
               <Input
-                allowClear
-                className=" w-36 mr-1"
+                className=" w-40 mr-1"
                 defaultValue={count.count}
-                onBlur={(e) => {
-                  setCounts(
-                    counts.map((item: Count, Index: number) => ({
-                      ...item,
-                      isInput: Index === index ? false : item.isInput,
-                      count: Index === index ? e.target.value : item.count,
-                    }))
-                  );
-                  getInfoByAddress(e);
-                }}
+                onPressEnter={(e)=>addCountByBlurOrEnter(e,index)}
+                onBlur={(e) =>addCountByBlurOrEnter(e,index)}
+                suffix={<CloseOutlined onClick={(e)=>deleteCount(e,index)} />}
               ></Input>
             ) : (
               <div
-                className="h-8 w-36  flex items-center rounded-sm pl-2"
+                className="h-8 w-40  flex items-center rounded-sm pl-2 relative"
                 style={{ border: "1px solid #ccc" }}
                 onClick={() =>
                   setCounts(
@@ -137,6 +147,7 @@ const Home = ({ data }: { data: any[] }) => {
                 }
               >
                 {formatCount(count.count)}
+               {counts.length !== 1 && <CloseOutlined className=" absolute right-1" onClick={(e)=>deleteCount(e,index)} />}
               </div>
             )}
             <div className=" ml-1">
@@ -157,11 +168,13 @@ const Home = ({ data }: { data: any[] }) => {
       <div>
         <Table
           dataSource={dataSource}
+          // @ts-ignore
           columns={columns}
           pagination={false}
-          tableLayout="fixed"
+          // tableLayout="fixed"
           rowKey="id"
           loading={loading}
+          
         />
       </div>
     </div>

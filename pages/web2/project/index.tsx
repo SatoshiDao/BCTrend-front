@@ -131,7 +131,7 @@ const Project = ({ data }: { data: any }) => {
   }, [data]);
   return (
     <div
-      className=" w-full h-full  rounded-sm p-5"
+      className=" w-full h-full  rounded-sm p-5 m-8"
       style={{ border: "1px solid #333" }}
     >
       <Spin spinning={loading}>
