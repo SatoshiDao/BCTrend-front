@@ -40,7 +40,7 @@ const Home = () => {
     total_asset: "Total Assets",
     daily_pnl: "Daily PnL",
     pnl_ratio: "Daily PnL Ratio",
-    daily_tnx: "Daily Txns",
+    daily_txn: "Daily Txns",
     stable_coin: "Stable Coin%",
   };
   const [data, setData] = useState<any[]>([]);
