@@ -32,7 +32,7 @@ const Home = ({ data }: { data: any[] }) => {
     },
     {
       id: "stable_coin",
-      title: "Stable Coin%",
+      title: "Stable Coin",
     },
     {
       id: "days_activity",

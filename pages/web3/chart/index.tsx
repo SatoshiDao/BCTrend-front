@@ -1,6 +1,6 @@
-import { Button, DatePicker, Select, Spin, AutoComplete,Tooltip} from "antd";
+import { Button, DatePicker, Select, Spin, AutoComplete, Tooltip } from "antd";
 import { useState, useEffect } from "react";
-import { Line } from "@ant-design/plots";
+import { Line, DualAxes } from "@ant-design/plots";
 import dayjs from "dayjs";
 import { formatCount } from "../../../utils";
 import { CloseOutlined } from "@ant-design/icons";
@@ -8,7 +8,7 @@ import request from "../../../utils/request";
 import { useRouter } from "next/router";
 import moment from "moment";
 const Home = () => {
-  const tags = ["7D", "1M", "3M", "6M", "1Y", "ALL"];
+  const tags = ["7D", "1M", "3M", "6M", "1Y", "All"];
   const chartOptions = [
     {
       label: "Total assets",
@@ -31,9 +31,9 @@ const Home = () => {
       title: "Daily Txns",
     },
     {
-      label: "Stable Coin%",
+      label: "Stable Coin",
       value: "stable_coin",
-      title: "Stable Coin%",
+      title: "Stable Coin",
     },
   ];
   const titles: { [key: string]: string } = {
@@ -41,7 +41,7 @@ const Home = () => {
     daily_pnl: "Daily PnL",
     pnl_ratio: "Daily PnL Ratio",
     daily_txn: "Daily Txns",
-    stable_coin: "Stable Coin%",
+    stable_coin: "Stable Coin",
   };
   const [data, setData] = useState<any[]>([]);
   const [tag, setTag] = useState("1Y");
@@ -56,6 +56,7 @@ const Home = () => {
   const { query } = useRouter();
   const [counts, setCounts] = useState<any[]>([]);
   const [range, setRange] = useState({ min: 0, max: 100 });
+  const [otherRange,setOtherRange]=useState({ min: 0, max: 100 });
   useEffect(() => {
     if (query.address) {
       setCounts([{ address: query.address, id: 1, active: true }]);
@@ -115,32 +116,27 @@ const Home = () => {
         setTitle(
           `${titleAccount} ${titles[chartColum]} vs. ${titles[compareColum]}`
         );
-        let data = [];
-        data.push(
-          DATA.map((item: any) => ({
-            date: item.date,
-            value: parseFloat(item[chartColum as string])||0,
-            type: `${formatCount(item.address)} ${titles[chartColum]}`,
-          }))
-        );
-        data.push(
-          DATA.map((item: any) => ({
-            date: item.date,
-            value: parseFloat(item[compareColum as string])||0,
-            type: `${formatCount(item.address)} ${titles[compareColum]}`,
-          }))
-        );
-        const values = data.flat().map(({ value }) => value);
-        const min = Math.min(...values);
-        const max = Math.max(...values);
-        setRange({ min, max });
-        return setData(data.flat());
+        const data1= DATA.map((item: any) => ({
+          date: item.date,
+          value: parseFloat(item[chartColum as string]) || 0,
+          type: `${formatCount(item.address)} ${titles[chartColum]}`,
+        }))
+        const data2= DATA.map((item: any) => ({
+          date: item.date,
+          count: parseFloat(item[compareColum as string]) || 0,
+          type: `${formatCount(item.address)} ${titles[compareColum]}`,
+        }))
+        const values1=data1.map(({value})=>value)
+        const values2=data2.map(({count})=>count)
+        setRange({ min:Math.min(...values1), max:Math.max(...values1) });
+        setOtherRange({min:Math.min(...values2), max:Math.max(...values2)})
+        return setData([data1,data2]);
       }
       if (chartColum) {
         setTitle(`${titleAccount} ${titles[chartColum]} historical chart`);
         let resultData = DATA.map((item: any) => ({
           date: item.date,
-          value: parseFloat(item[chartColum as string])||0,
+          value: parseFloat(item[chartColum as string]) || 0,
           type: `${formatCount(item.address)} ${titles[chartColum]}`,
         }));
         const values = resultData.map(({ value }) => value);
@@ -153,7 +149,7 @@ const Home = () => {
         setTitle(`${titleAccount} ${titles[compareColum]} historical chart`);
         let resultData = DATA.map((item: any) => ({
           date: item.date,
-          value: parseFloat(item[compareColum as string])||0,
+          value: parseFloat(item[compareColum as string]) || 0,
           type: `${formatCount(item.address)} ${titles[compareColum]}`,
         }));
         const values = resultData.map(({ value }) => value);
@@ -170,7 +166,6 @@ const Home = () => {
     yField: "value",
     seriesField: "type",
     xAxis: {
-      type: "time",
       nice: true,
       tickCount: 20,
     },
@@ -178,7 +173,9 @@ const Home = () => {
       min: range.min,
       max: range.max,
     },
-    smooth: true,
+    // smooth: true,
+    height:550,
+    autoFit:false
   };
   const changeDate = (tag: string) => {
     setTag(tag);
@@ -201,9 +198,11 @@ const Home = () => {
         return;
     }
   };
+
+  console.log(otherRange, "88888",range,data);
   return (
     <div
-      className=" h-full p-4 px-9 pb-44 m-8"
+      className=" h-full p-4 px-9 pb-8 m-8"
       style={{ border: "1px solid #333" }}
     >
       <Spin spinning={loading}>
@@ -236,7 +235,29 @@ const Home = () => {
             />
           </div>
         </div>
-        <Line {...config}></Line>
+        {chartColum && compareColum ? (
+          <DualAxes
+            data={data}
+            xField="date"
+            yField={["value", "count"]}
+            geometryOptions={[
+              {
+                geometry: "line",
+                seriesField: "type",
+                ...range
+              },
+              {
+                geometry: "line",
+                seriesField: "type",
+                ...otherRange
+              },
+            ]}
+            height={550}
+            autoFit={false}
+          />
+        ) : (
+          <Line {...config}></Line>
+        )}
         <div className=" mt-8 ml-8 flex">
           <AutoComplete
             className=" w-40  mr-6"
@@ -276,7 +297,9 @@ const Home = () => {
               icon={
                 <div className=" flex items-center h-8 p-2 pb-4">
                   <div className=" mr-1">
-                   <Tooltip title={count.address}> {formatCount(count.address as string)}</Tooltip>
+                    <Tooltip title={count.address}>
+                      {formatCount(count.address as string)}
+                    </Tooltip>
                   </div>
                   <CloseOutlined
                     className=" ml-1"
@@ -296,7 +319,7 @@ const Home = () => {
           <div className=" flex items-center">
             <div>Chart:</div>
             <Select
-              options={chartOptions}
+              options={chartOptions.map((item)=>({...item,disabled:item.value===compareColum?true:false}))}
               className=" w-80 ml-2"
               defaultValue={chartColum}
               placeholder="Avg. Transaction Value"
@@ -307,7 +330,8 @@ const Home = () => {
           <div className=" flex  items-center">
             <div>Compare with:</div>
             <Select
-              options={chartOptions}
+              allowClear
+              options={chartOptions.map((item)=>({...item,disabled:item.value===chartColum?true:false}))}
               defaultValue={compareColum}
               className=" w-80 ml-2"
               style={{ width: "330px" }}
