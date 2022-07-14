@@ -56,17 +56,13 @@ const Home = () => {
   const { query } = useRouter();
   const [counts, setCounts] = useState<any[]>([]);
   const [range, setRange] = useState({ min: 0, max: 100 });
-  const [otherRange,setOtherRange]=useState({ min: 0, max: 100 });
+  const [otherRange, setOtherRange] = useState({ min: 0, max: 100 });
   useEffect(() => {
     if (query.address) {
       setCounts([{ address: query.address, id: 1, active: true }]);
     } else {
       setCounts([
-        {
-          address: "0x781229c7a798c33ec788520a6bbe12a79ed657fc",
-          id: 1,
-          active: true,
-        },
+        ...JSON.parse(sessionStorage.getItem('counts')||'[{"address":"0x781229c7a798c33ec788520a6bbe12a79ed657fc","id":1,"active":true}]')
         // {
         //   address: "0x260ee8f2b0c167e0cd6119b2df923fd061dc1093",
         //   id: 2,
@@ -116,21 +112,21 @@ const Home = () => {
         setTitle(
           `${titleAccount} ${titles[chartColum]} vs. ${titles[compareColum]}`
         );
-        const data1= DATA.map((item: any) => ({
+        const data1 = DATA.map((item: any) => ({
           date: item.date,
           value: parseFloat(item[chartColum as string]) || 0,
           type: `${formatCount(item.address)} ${titles[chartColum]}`,
-        }))
-        const data2= DATA.map((item: any) => ({
+        }));
+        const data2 = DATA.map((item: any) => ({
           date: item.date,
           count: parseFloat(item[compareColum as string]) || 0,
           type: `${formatCount(item.address)} ${titles[compareColum]}`,
-        }))
-        const values1=data1.map(({value})=>value)
-        const values2=data2.map(({count})=>count)
-        setRange({ min:Math.min(...values1), max:Math.max(...values1) });
-        setOtherRange({min:Math.min(...values2), max:Math.max(...values2)})
-        return setData([data1,data2]);
+        }));
+        const values1 = data1.map(({ value }) => value);
+        const values2 = data2.map(({ count }) => count);
+        setRange({ min: Math.min(...values1), max: Math.max(...values1) });
+        setOtherRange({ min: Math.min(...values2), max: Math.max(...values2) });
+        return setData([data1, data2]);
       }
       if (chartColum) {
         setTitle(`${titleAccount} ${titles[chartColum]} historical chart`);
@@ -174,8 +170,12 @@ const Home = () => {
       max: range.max,
     },
     // smooth: true,
-    height:550,
-    autoFit:false
+    height: 550,
+    autoFit: false,
+    slider:{
+      start:0,
+      end:1000
+    }
   };
   const changeDate = (tag: string) => {
     setTag(tag);
@@ -198,8 +198,6 @@ const Home = () => {
         return;
     }
   };
-
-  console.log(otherRange, "88888",range,data);
   return (
     <div
       className=" h-full p-4 px-9 pb-8 m-8"
@@ -244,12 +242,12 @@ const Home = () => {
               {
                 geometry: "line",
                 seriesField: "type",
-                ...range
+                ...range,
               },
               {
                 geometry: "line",
                 seriesField: "type",
-                ...otherRange
+                ...otherRange,
               },
             ]}
             height={550}
@@ -268,6 +266,13 @@ const Home = () => {
               const value = target.value;
               const values = counts.map(({ address }) => address);
               if (!values.includes(value) && value) {
+                sessionStorage.setItem(
+                  "counts",
+                  JSON.stringify([
+                    ...counts,
+                    { address: target.value, id: counts.length, active: true },
+                  ])
+                );
                 setCounts([
                   ...counts,
                   { address: target.value, id: counts.length, active: true },
@@ -305,6 +310,7 @@ const Home = () => {
                     className=" ml-1"
                     onClick={(e) => {
                       e.stopPropagation();
+                      sessionStorage.setItem('counts',JSON.stringify(counts.filter((item, Index) => Index !== index)))
                       setCounts(
                         counts.filter((item, Index) => Index !== index)
                       );
@@ -319,7 +325,10 @@ const Home = () => {
           <div className=" flex items-center">
             <div>Chart:</div>
             <Select
-              options={chartOptions.map((item)=>({...item,disabled:item.value===compareColum?true:false}))}
+              options={chartOptions.map((item) => ({
+                ...item,
+                disabled: item.value === compareColum ? true : false,
+              }))}
               className=" w-80 ml-2"
               defaultValue={chartColum}
               placeholder="Avg. Transaction Value"
@@ -331,7 +340,10 @@ const Home = () => {
             <div>Compare with:</div>
             <Select
               allowClear
-              options={chartOptions.map((item)=>({...item,disabled:item.value===chartColum?true:false}))}
+              options={chartOptions.map((item) => ({
+                ...item,
+                disabled: item.value === chartColum ? true : false,
+              }))}
               defaultValue={compareColum}
               className=" w-80 ml-2"
               style={{ width: "330px" }}
