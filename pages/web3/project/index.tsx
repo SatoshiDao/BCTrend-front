@@ -180,7 +180,7 @@ const Home = ({ data }: { data: any[] }) => {
     </div>
   );
 };
-export async function getStaticProps(context: any) {
+export async function getServerSideProps(context: any) {
   try {
     //@ts-ignore
     const { result } = await request({
