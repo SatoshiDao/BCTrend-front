@@ -58,7 +58,6 @@ const Home = ({ dataSource, counts }: { dataSource: any[]; counts: any[] }) => {
   useEffect(() => {
     (async () => {
       let DATA = dataSource
-        //  @ts-ignore
         .map((result, index: number) =>
           Object.entries(result).map(
             ([date, item]: [date: string, item: any]) => ({
@@ -337,7 +336,6 @@ export async function getServerSideProps(context: any) {
       '[{"address": "0xceb69f6342ece283b2f5c9088ff249b5d0ae66ea","active":true,"id":1}]'
   );
   try {
-    //@ts-ignore
     const data = await Promise.all(
       counts
         .filter(({ active }: { active: boolean }) => active === true)

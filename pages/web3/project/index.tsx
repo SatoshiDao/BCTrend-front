@@ -3,16 +3,14 @@ import { PlusCircleOutlined,CloseOutlined} from "@ant-design/icons";
 import { useState, useEffect, useMemo,useCallback} from "react";
 import request from "../../../utils/request";
 import { formatCount } from "../../../utils";
+import {useRouter} from 'next/router';
 interface Count {
   count: string;
   isInput: boolean;
 }
-const Home = ({ data }: { data: any[] }) => {
+const Home = ({ data,address }: { data: any[],address:string[] }) => {
   //初始化counts
-  const [counts, setCounts] = useState<Count[]>(
-    data.map((item) => ({ count: item.address, isInput: false }))
-  );
-  const [loading,setLoading]=useState(false)
+  const [counts, setCounts] = useState<Count[]>(address.map((item) => ({ count:item, isInput: false })));
   const [dataSource, setDataSource] = useState<any[]>([
     {
       id: "total_asset",
@@ -39,8 +37,7 @@ const Home = ({ data }: { data: any[] }) => {
       title: "7/30/90 Days Activity",
     },
   ]);
-  const [concatData, setConcatData] = useState(data);
-
+  const {push}=useRouter()
   const columns = useMemo(() => {
     const extendCo = counts.filter((item:Count)=>item.count!=='').map((item: Count) => ({
       title:<Tooltip title={item.count}><a  className=" text-blue-400" href={`./chart?address=${item.count}`}>{formatCount(item.count)}</a></Tooltip>,
@@ -75,7 +72,7 @@ const Home = ({ data }: { data: any[] }) => {
       setDataSource(
         dataSource?.map((Item) => {
           let keys: { [key: string]: any } = {};
-          concatData.map((item) => {
+          data.map((item) => {
             if (!keys[item.address]) {
               keys[item.address] = item[Item.id]||0;
             }
@@ -84,20 +81,10 @@ const Home = ({ data }: { data: any[] }) => {
         })
       );
     })();
-  }, [concatData]);
+  }, [data]);
   const getInfoByAddress = async ({ target }: { target: any }) => {
     if(target.value){
-      setLoading(true)
-      //@ts-ignore
-      const { result } = await request({
-        url: `/`,
-        method: "GET",
-        params: {
-          address: target.value,
-        },
-      });
-      setLoading(false)
-      setConcatData([...concatData, { ...result, address: target.value }]);
+      push({pathname:'./project',query:{counts:JSON.stringify([...counts.map(item=>item.count),target.value])}})
     }
     
   };
@@ -173,7 +160,6 @@ const Home = ({ data }: { data: any[] }) => {
           pagination={false}
           // tableLayout="fixed"
           rowKey="id"
-          loading={loading}
           
         />
       </div>
@@ -181,25 +167,19 @@ const Home = ({ data }: { data: any[] }) => {
   );
 };
 export async function getServerSideProps(context: any) {
+  const counts=JSON.parse(context.query.counts||'["0xceb69f6342ece283b2f5c9088ff249b5d0ae66ea"]').filter((count:string)=>count)
   try {
-    //@ts-ignore
-    const { result } = await request({
+    const data = await Promise.all(counts.map((count:string)=>request({
       url: `/`,
       params: {
-        address: "0xceb69f6342ece283b2f5c9088ff249b5d0ae66ea",
+        address:count,
       },
       method: "GET",
-    });
+    })));
     return {
       props: {
-        data: result
-          ? [
-              {
-                ...result,
-                address: "0xceb69f6342ece283b2f5c9088ff249b5d0ae66ea",
-              },
-            ]
-          : [],
+         data : data.map(({result},index:number)=>({...result,address:counts[index]})),
+         address:counts
       },
     };
   } catch (error) {
