@@ -105,16 +105,16 @@ const Home = () => {
             yAxisIndex:[0],
             start: 0, // 滚动条的起始位置（10%）
             end: 100, // 滚动条的
-            filterMode:"none"
+            filterMode:"empty"
           },
           {
             type: "inside",
             show: true,
             xAxisIndex: [0],
-            yAxisIndex:[0],
+            // yAxisIndex:[0,1],
             start: 0, // 滚动条的起始位置（10%）
             end: 100, // 滚动条的
-            filterMode:"none"
+            filterMode:"empty"
           },
         ],
         grid: {
